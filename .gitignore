@@ -1,0 +1,52 @@
+# --- CMake / build directories ---
+/build/
+build*/
+/_install/
+out/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+*.cmake.stamp
+
+# --- Compiled objects, libraries, executables ---
+*.obj
+*.o
+*.lib
+*.a
+*.exp
+*.ilk
+*.exe
+*.dll
+*.so
+*.dylib
+
+# --- Debug info / linker output ---
+*.pdb
+*.idb
+*.map
+
+# --- MSVC / MSBuild artifacts ---
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+Win32/
+*.tlog
+*.log
+*.lastbuildstate
+*.user
+*.aps
+vc*.pdb
+.vs/
+
+# --- deadcode-cli engine output (must never be committed) ---
+*.opmap.txt
+*_output.exe
+
+# --- IDE / editor ---
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store

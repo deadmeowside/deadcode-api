@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Windows / MSVC — the engine's primary target. Build x86 and x64, Debug and
+  # Release, and run the symbol-survival test in each. Release (/O2) is the
+  # realistic shipping case and the one most likely to expose a missing
+  # anti-inline / anti-fold guard.
+  # ---------------------------------------------------------------------------
+  windows-msvc:
+    name: Windows MSVC (${{ matrix.arch }}, ${{ matrix.config }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [Win32, x64]
+        config: [Debug, Release]
+        include:
+          - arch: Win32
+            devcmd_arch: x86
+          - arch: x64
+            devcmd_arch: amd64
+    steps:
+      - uses: actions/checkout@v4
+      # Puts cl.exe and dumpbin.exe on PATH (dumpbin is used by the test).
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.devcmd_arch }}
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.arch }}
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }}
+      - name: Symbol-survival test
+        run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
+
+  # ---------------------------------------------------------------------------
+  # Windows / clang-cl — same checks via the LLVM toolset.
+  # ---------------------------------------------------------------------------
+  windows-clang-cl:
+    name: Windows clang-cl (x64, ${{ matrix.config }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }}
+      - name: Symbol-survival test
+        run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
+
+  # ---------------------------------------------------------------------------
+  # Linux / GCC + Clang — SDK portability only (no engine on Linux). Configure,
+  # build, and confirm the marker symbols survive via nm.
+  # ---------------------------------------------------------------------------
+  linux:
+    name: Linux ${{ matrix.cc }} (${{ matrix.config }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { cc: gcc,   cxx: g++,     config: Debug }
+          - { cc: gcc,   cxx: g++,     config: Release }
+          - { cc: clang, cxx: clang++, config: Debug }
+          - { cc: clang, cxx: clang++, config: Release }
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+      - name: Build
+        run: cmake --build build
+      - name: Symbol-survival test (nm)
+        run: ctest --test-dir build --output-on-failure
