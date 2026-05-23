@@ -131,8 +131,7 @@ The **SDK** in this repository is public and MIT-licensed (see [LICENSE](LICENSE
 The **`deadcode-cli` engine** is a separate, closed-source commercial product
 and is not distributed here.
 
-For engine licensing and evaluation, contact **licensing@deadcode.example**
-*(placeholder — replace with your real contact address before publishing)*.
+For engine licensing and evaluation, contact **deadcodeclub@proton.me**.
 
 ## License
 
